@@ -59,16 +59,22 @@ SELECT a.*
 -- Get details from Gold Load Balance Table #1
 SELECT location_code,
        bal
-  FROM ggw_loans.gl_total_loan_balances_1
+  FROM ggw_loans.gl_total_loan_balances
  ORDER BY bal DESC
 ;
+
+-- COMMAND ----------
+
+-- Describe 
+DESCRIBE EXTENDED ggw_loans.gl_total_loan_balances
+DESCRIBE EXTENDED ggw_loans.gl_total_loan_balances_z
 
 -- COMMAND ----------
 
 -- Get details from Gold Load Balance Table #2
 SELECT location_code,
        bal
-  FROM ggw_loans.gl_total_loan_balances_2
+  FROM ggw_loans.gl_total_loan_balances_z
  ORDER BY bal DESC
 ;
 

@@ -66,8 +66,8 @@ SELECT location_code,
 -- COMMAND ----------
 
 -- Describe 
-DESCRIBE EXTENDED ggw_loans.gl_total_loan_balances
-DESCRIBE EXTENDED ggw_loans.gl_total_loan_balances_z
+-- DESCRIBE EXTENDED ggw_loans.gl_total_loan_balances;
+DESCRIBE EXTENDED ggw_loans.gl_total_loan_balances_z;
 
 -- COMMAND ----------
 

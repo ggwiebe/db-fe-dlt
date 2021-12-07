@@ -3,7 +3,7 @@
 -- DLT Event Log & Data Quality Scores
 ----------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS ggw_loans.event_log
-USING delta
+ USING delta
 LOCATION 'dbfs:/Users/glenn.wiebe@databricks.com/dlt_loans/system/events'
 ;
 
@@ -12,6 +12,8 @@ SELECT *
 ;
 
 -- DESCRIBE TABLE EXTENDED ggw_loans.event_log;
+
+-- COMMAND ----------
 
 ----------------------------------------------------------------------------------------
 -- Lineage
@@ -25,6 +27,9 @@ SELECT details:flow_definition.output_dataset,
   FROM ggw_loans.event_log
  WHERE details:flow_definition IS NOT NULL
  ORDER BY timestamp
+;
+
+-- COMMAND ----------
 
 ----------------------------------------------------------------------------------------
 -- Pipeline Data Components
@@ -33,20 +38,25 @@ SELECT details:flow_definition.output_dataset,
        details:flow_definition.input_datasets
   FROM ggw_loans.event_log
  WHERE details:flow_definition IS NOT NULL
+;
+
+-- COMMAND ----------
 
 ----------------------------------------------------------------------------------------
 -- Flow Progress & Data Quality Results
 ----------------------------------------------------------------------------------------
-SELECT 
-  id,
-  details:flow_progress.metrics,
-  details:flow_progress.data_quality.dropped_records,
-  explode(from_json(details:flow_progress:data_quality:expectations
-           ,schema_of_json("[{'name':'str', 'dataset':'str', 'passed_records':42, 'failed_records':42}]"))) expectations,
-  details:flow_progress
-FROM ggw_loans.event_log
-WHERE details:flow_progress.metrics IS NOT NULL
-ORDER BY timestamp
+SELECT id,
+       details:flow_progress.metrics,
+       details:flow_progress.data_quality.dropped_records,
+       explode(from_json(details:flow_progress:data_quality:expectations
+                ,schema_of_json("[{'name':'str', 'dataset':'str', 'passed_records':42, 'failed_records':42}]"))) expectations,
+       details:flow_progress
+  FROM ggw_loans.event_log
+ WHERE details:flow_progress.metrics IS NOT NULL
+ ORDER BY timestamp
+;
+
+-- COMMAND ----------
 
 ----------------------------------------------------------------------------------------
 -- Data Quality Expectation Metrics

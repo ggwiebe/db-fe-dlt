@@ -3,6 +3,10 @@
 -- MAGIC 
 -- MAGIC # SETUP
 -- MAGIC 
+-- MAGIC dbutils.widgets.text('database')
+-- MAGIC dbutils.widgets.text('path')
+-- MAGIC 
+-- MAGIC 
 -- MAGIC DB = dbutils.widgets.get('database')
 -- MAGIC PATH = dbutils.widgets.get('path')
 -- MAGIC 

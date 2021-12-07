@@ -10,9 +10,21 @@
 # COMMAND ----------
 
 # DBTITLE 1,Run First for Widgets
-dbutils.widgets.text('path', 'first.last@databricks.com/dlt_demo', 'Storage Path')
+dbutils.widgets.text('path', '/Users/glenn.wiebe@databricks.com/dlt_demo', 'Landing Path')
 dbutils.widgets.combobox('batch_wait', '30', ['15', '30', '45', '60'], 'Speed (secs between writes)')
 dbutils.widgets.combobox('num_recs', '10000', ['5000', '10000', '20000'], 'Volume (# records per writes)')
+
+# COMMAND ----------
+
+output_path = dbutils.widgets.get('path')
+
+# dbutils.fs.ls("/Users/")
+# dbutils.fs.ls("/home/")
+# dbutils.fs.ls("/Users/glenn.wiebe@databricks.com")
+
+# dbutils.fs.mkdirs(f'{output_path}')
+dbutils.fs.ls(output_path)
+
 
 # COMMAND ----------
 
@@ -647,9 +659,18 @@ while True:
 
 # COMMAND ----------
 
+# Exit here to allow for appendix of useful commands below
+dbutils.notebook.exit()
+
+# COMMAND ----------
+
 # DBTITLE 1,Reset Landing Zone
 dbutils.fs.rm(f'{output_path}', True)
 
 # COMMAND ----------
 
+dbutils.fs.ls("/Users/glenn.wiebe@databricks.com/dlt_demo/landing")
 
+# COMMAND ----------
+
+dbutils.fs.ls("/databricks-datasets/lending-club-loan-stats/")

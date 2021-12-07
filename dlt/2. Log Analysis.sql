@@ -1,7 +1,7 @@
 -- Databricks notebook source
 -- MAGIC %python
--- MAGIC dbutils.widgets.text('storage_location', 'dbfs:/pipelines/123', 'Storage Location')
--- MAGIC dbutils.widgets.text('db', 'dillon', 'Database')
+-- MAGIC dbutils.widgets.text('storage_location', 'dbfs:/Users/glenn.wiebe@databricks.com/dlt_loans', 'Storage Location')
+-- MAGIC dbutils.widgets.text('db', 'ggw_loans', 'DB Name')
 
 -- COMMAND ----------
 
@@ -13,12 +13,17 @@ USE ${db}
 
 -- COMMAND ----------
 
-CREATE OR REPLACE VIEW loan_pipeline_logs
-AS SELECT * FROM delta.`/pipelines/7c4e0c53-9281-410c-a0bd-924345fde774/system/events`
+-- CREATE OR REPLACE VIEW loan_pipeline_logs
+-- AS SELECT * FROM delta.`dbfs:/Users/glenn.wiebe@databricks.com/dlt_loans/system/events`
+
+CREATE TABLE IF NOT EXISTS ggw_loans.event_log
+USING delta
+LOCATION 'dbfs:/Users/glenn.wiebe@databricks.com/dlt_loans/system/events'
+
 
 -- COMMAND ----------
 
-SELECT * FROM loan_pipeline_logs
+SELECT * FROM event_log
 ORDER BY timestamp
 
 -- COMMAND ----------
@@ -47,7 +52,7 @@ ORDER BY timestamp
 -- MAGIC   details:flow_definition.flow_type,
 -- MAGIC   details:flow_definition.schema,
 -- MAGIC   details:flow_definition
--- MAGIC FROM loan_pipeline_logs
+-- MAGIC FROM event_log
 -- MAGIC WHERE details:flow_definition IS NOT NULL
 -- MAGIC ORDER BY timestamp
 
@@ -67,7 +72,7 @@ FROM(
     details:flow_progress.data_quality.dropped_records,
     explode(from_json(details:flow_progress:data_quality:expectations
              ,schema_of_json("[{'name':'str', 'dataset':'str', 'passed_records':42, 'failed_records':42}]"))) expectations
-  FROM loan_pipeline_logs
+  FROM event_log
   WHERE details:flow_progress.metrics IS NOT NULL) data_quality
 
 

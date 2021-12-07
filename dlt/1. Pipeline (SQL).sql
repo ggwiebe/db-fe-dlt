@@ -2,26 +2,29 @@
 CREATE INCREMENTAL LIVE TABLE BZ_raw_txs
 COMMENT "New raw loan data incrementally ingested from cloud object storage landing zone"
 TBLPROPERTIES ("quality" = "bronze")
-AS SELECT * FROM cloud_files('/dillon.bostwick@databricks.com/dlt_demo/landing', 'json')
+AS SELECT * FROM cloud_files('/Users/glenn.wiebe@databricks.com/dlt_demo/landing', 'json')
 
 -- COMMAND ----------
 
 CREATE LIVE TABLE ref_accounting_treatment
 COMMENT "Lookup mapping for accounting codes"
-AS SELECT * FROM delta.`/dillon.bostwick@databricks.com/dlt_demo/ref_accounting_treatment/`
+AS SELECT * FROM delta.`/Users/glenn.wiebe@databricks.com/dlt_demo/ref_accounting_treatment/`
 
 -- COMMAND ----------
 
 CREATE INCREMENTAL LIVE TABLE SV_cleaned_new_txs (
-  CONSTRAINT `Payments should be this year`  EXPECT (next_payment_date > date('2020-12-31')),
-  CONSTRAINT `Balance should be positive`    EXPECT (balance > 0 AND arrears_balance > 0) ON VIOLATION DROP ROW
-  CONSTRAINT `Cost center must be specified` EXPECT (cost_center_code IS NOT NULL) ON VIOLATION FAIL UPDATE,
+  CONSTRAINT PaymentsCurrentYear EXPECT (next_payment_date > date('2020-12-31')),
+  CONSTRAINT BalancePositive     EXPECT (balance > 0 AND arrears_balance > 0) ON VIOLATION DROP ROW,
+  CONSTRAINT CostCenterSpecified EXPECT (cost_center_code IS NOT NULL)        ON VIOLATION FAIL UPDATE
   -- Roadmap: Quarantine
 )
 COMMENT "Livestream of new transactions, cleaned and compliant"
-TBLPROPERTIES ("quality" = "silver")
-AS SELECT txs.*, rat.id as accounting_treatment FROM stream(LIVE.BZ_raw_txs) txs
-INNER JOIN live.ref_accounting_treatment rat ON txs.accounting_treatment_id = rat.id
+TBLPROPERTIES ("quality" = "silver") AS
+ SELECT txs.*, 
+        rat.id AS accounting_treatment 
+   FROM STREAM(LIVE.BZ_raw_txs) txs
+  INNER JOIN LIVE.ref_accounting_treatment rat 
+          ON txs.accounting_treatment_id = rat.id
 
 -- COMMAND ----------
 

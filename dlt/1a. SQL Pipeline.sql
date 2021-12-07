@@ -42,13 +42,13 @@ SELECT *
 -- COMMAND ----------
 
 CREATE LIVE TABLE SV_historical_txs
-COMMENT "Historical loan transactions"
+COMMENT "Historical loan transactions - no Reference Accounting Treatment lookup"
 TBLPROPERTIES ("quality" = "silver")
 AS 
 SELECT a.*
   FROM      LIVE.BZ_reference_loan_stats a
- INNER JOIN LIVE.ref_accounting_treatment b 
-            USING (id)
+--  INNER JOIN LIVE.ref_accounting_treatment b 
+--             USING (id)
 
 -- COMMAND ----------
 

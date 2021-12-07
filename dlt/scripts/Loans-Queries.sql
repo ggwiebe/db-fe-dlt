@@ -14,10 +14,27 @@ SELECT COUNT(*)
 
 -- COMMAND ----------
 
+-- MAGIC %fs ls /databricks-datasets/lending-club-loan-stats/
+
+-- COMMAND ----------
+
 -- Get details of raw loan stats
-SELECT *
-  FROM ggw_loans.bz_reference_loan_stats
+-- mode "FAILFAST" will abort file parsing with a RuntimeException if any malformed lines are encountered
+-- location on dbfs: /databricks-datasets/lending-club-loan-stats/LoanStats_2018Q2.csv
+CREATE TEMPORARY VIEW raw_reference_loan_stats
+ USING CSV
+OPTIONS (path "/databricks-datasets/lending-club-loan-stats/LoanStats_2018Q2.csv", header "true", mode "FAILFAST")
 ;
+
+-- Get details of bronze loan stats
+SELECT *
+  FROM raw_reference_loan_stats
+;
+
+-- Get details of bronze loan stats
+-- SELECT *
+--   FROM ggw_loans.bz_reference_loan_stats
+-- ;
 
 -- COMMAND ----------
 
@@ -26,6 +43,7 @@ SELECT a.*
   FROM      ggw_loans.BZ_reference_loan_stats a
  INNER JOIN ggw_loans.ref_accounting_treatment b 
             USING (id)
+
 -- COMMAND ----------
 
 -- Get details for silver with matching Account Treatment ID

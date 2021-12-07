@@ -1,3 +1,4 @@
+-- Databricks notebook source
 SELECT *
   FROM ggw_loans.bz_raw_txs
 

@@ -130,3 +130,6 @@ dmypy.json
 
 # SQL - e.g. DbVisualizer
 *.met
+
+# Mac Folder
+.DS_Store

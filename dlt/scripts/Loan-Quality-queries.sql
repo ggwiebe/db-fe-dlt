@@ -76,6 +76,4 @@ SELECT id,
           FROM ggw_loans.event_log
          WHERE details:flow_progress.metrics IS NOT NULL
         ) data_quality
-
-
 ;

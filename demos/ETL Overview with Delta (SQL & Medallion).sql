@@ -1,4 +1,10 @@
 -- Databricks notebook source
+-- DBTITLE 0,Evolution of the data landscape
+-- MAGIC %md # Evolution of Data Landscape
+-- MAGIC <img src=https://databricks.com/wp-content/uploads/2020/01/data-lakehouse.png width=1200px>
+
+-- COMMAND ----------
+
 -- MAGIC %python
 -- MAGIC 
 -- MAGIC # SETUP
@@ -26,14 +32,144 @@
 
 -- COMMAND ----------
 
--- DBTITLE 1,Evolution of the Data Lake
--- MAGIC %md
--- MAGIC <img src=https://databricks.com/wp-content/uploads/2020/01/data-lakehouse.png width=800px>
+-- MAGIC %md # Part 1: Ingest
+-- MAGIC <img src=https://databricks.com/wp-content/uploads/2021/08/delta-data-ingestion.jpg width=1200px/>
 
 -- COMMAND ----------
 
--- MAGIC %md # Part 1: Ingest
--- MAGIC ![delta0](files/dillon/delta0.png)
+-- MAGIC %md ## Stream Ingest
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Clear Stream Checkpoint Folder
+-- MAGIC %fs rm -r /Users/glenn.wiebe@databricks.com/dlt_demo/checkpoints
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC # Set necessary parms
+-- MAGIC input_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC infer_schema_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC 
+-- MAGIC # Read Separate from write
+-- MAGIC df = (spark.readStream.format("cloudFiles") \
+-- MAGIC   .option("cloudFiles.format", "json") \
+-- MAGIC   .option("cloudFiles.schemaLocation", infer_schema_path)
+-- MAGIC   .option("inferSchema", "true") \
+-- MAGIC   .load(input_path)
+-- MAGIC )
+-- MAGIC 
+-- MAGIC display(df)
+
+-- COMMAND ----------
+
+-- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/dlt_demo/landing/
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Read Stream, Write Delta & Create Table
+-- MAGIC %python
+-- MAGIC # Set necessary parms
+-- MAGIC input_path        = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC infer_schema_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC checkpoint_path   = "/Users/glenn.wiebe@databricks.com/dlt_demo/checkpoints"
+-- MAGIC delta_path        = "/Users/glenn.wiebe@databricks.com/dlt_demo/delta"
+-- MAGIC table_name_unmngd = "ggw_loans.loan_stream_unmngd"
+-- MAGIC 
+-- MAGIC # Read Separate from write
+-- MAGIC df = (spark.readStream.format("cloudFiles") 
+-- MAGIC   .option("cloudFiles.format", "json") 
+-- MAGIC   .option("cloudFiles.schemaLocation", infer_schema_path)
+-- MAGIC   .option("inferSchema", "true") 
+-- MAGIC   .queryName("Loan_From_Stream")
+-- MAGIC   .load(input_path)
+-- MAGIC )
+-- MAGIC 
+-- MAGIC # Write option 1 - write to unmanaged delta
+-- MAGIC (df.writeStream.format("delta")
+-- MAGIC   .option("checkpointLocation", checkpoint_path)
+-- MAGIC   .trigger(once=True)
+-- MAGIC   .start(delta_path)
+-- MAGIC )
+-- MAGIC 
+-- MAGIC # print("CREATE TABLE {} USING DELTA LOCATION '{}'".format(table_name_unmngd,delta_path))
+-- MAGIC # spark.sql("DROP TABLE {}".format(table_name_unmngd))
+-- MAGIC spark.sql("CREATE TABLE {} USING DELTA LOCATION '{}'".format(table_name_unmngd,delta_path))
+
+-- COMMAND ----------
+
+-- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/dlt_demo/delta
+
+-- COMMAND ----------
+
+SELECT *
+  FROM ggw_loans.loan_stream_unmngd
+ LIMIT 10
+;
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Clear Stream Checkpoint Folder
+-- MAGIC %fs rm -r /Users/glenn.wiebe@databricks.com/dlt_demo/checkpoints
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Read Stream, Write Delta Table
+-- MAGIC %python
+-- MAGIC # Set necessary parms
+-- MAGIC input_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC infer_schema_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC checkpoint_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/checkpoints"
+-- MAGIC table_name = "ggw_loans.loan_stream_mngd"
+-- MAGIC 
+-- MAGIC # Read Separate from write
+-- MAGIC df = (spark.readStream.format("cloudFiles") \
+-- MAGIC   .option("cloudFiles.format", "json") \
+-- MAGIC   .option("cloudFiles.schemaLocation", infer_schema_path)
+-- MAGIC   .option("inferSchema", "true") \
+-- MAGIC   .load(input_path)
+-- MAGIC )
+-- MAGIC 
+-- MAGIC # Write option 2 - write to managed delta
+-- MAGIC ret = (df.writeStream.format("delta") 
+-- MAGIC   .option("checkpointLocation", checkpoint_path) 
+-- MAGIC   .queryName("Loan_From_Stream")
+-- MAGIC   .trigger(once=True)
+-- MAGIC   .table(table_name)
+-- MAGIC )
+-- MAGIC 
+-- MAGIC ret_df = spark.sql("SELECT COUNT(*) RowCount FROM {}".format(table_name))
+-- MAGIC row_count = ret_df.first()['RowCount']
+-- MAGIC print("Dataframe df.count() = {}, writeStream return = {}".format(row_count,ret))
+
+-- COMMAND ----------
+
+SELECT * 
+  FROM ggw_loans.loan_stream_mngd
+ LIMIT 10
+;
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC 
+-- MAGIC # input_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC # infer_schema_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/landing"
+-- MAGIC #delta_path = "/Users/glenn.wiebe@databricks.com/dlt_demo/delta"
+-- MAGIC 
+-- MAGIC # Read & write in one step
+-- MAGIC ret = (spark.readStream.format("cloudFiles") 
+-- MAGIC   .option("cloudFiles.format", "json") 
+-- MAGIC   .option("cloudFiles.schemaLocation", infer_schema_path)
+-- MAGIC   .option("inferSchema", "true") 
+-- MAGIC   .load(input_path) 
+-- MAGIC   .writeStream 
+-- MAGIC   .option("mergeSchema", "true") 
+-- MAGIC   .start(delta_path)
+
+-- COMMAND ----------
+
+-- MAGIC %md ## Parquet to Delta
 
 -- COMMAND ----------
 
@@ -52,17 +188,25 @@ SELECT * FROM delta.`/home/dillon.bostwick@databricks.com/deltademo/amazon/data2
 
 -- COMMAND ----------
 
--- DBTITLE 1,Example #2: JSON files in S3
-CREATE TABLE IOTEventsBronze
-USING delta
-AS SELECT * FROM json.`/home/dillon.bostwick@databricks.com/deltademo/iot/iot_devices.json`;
-
-SELECT * FROM IOTEventsBronze;
+-- MAGIC %md ## JSON Files
 
 -- COMMAND ----------
 
--- DBTITLE 1,Example #3: Use an ETL service
--- MAGIC %md 
+-- MAGIC %fs ls /databricks-datasets/iot
+
+-- COMMAND ----------
+
+-- DBTITLE 0,Example #2: JSON files
+CREATE TABLE ggw_loans.IOTEventsBronze
+USING delta
+AS SELECT * FROM json.`dbfs:/databricks-datasets/iot/iot_devices.json`;
+
+SELECT * FROM ggw_loans.IOTEventsBronze;
+
+-- COMMAND ----------
+
+-- DBTITLE 0,Other options: Use a Partner ETL service
+-- MAGIC %md ## Partner ETL
 -- MAGIC 
 -- MAGIC <img src="https://databricks.com/wp-content/uploads/2020/02/partner-integrations-and-sources.png" width="750" height="750">
 

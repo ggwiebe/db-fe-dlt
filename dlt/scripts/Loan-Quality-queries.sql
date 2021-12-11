@@ -77,3 +77,14 @@ SELECT id,
          WHERE details:flow_progress.metrics IS NOT NULL
         ) data_quality
 ;
+
+-- COMMAND ----------
+
+-- Get details from Gold Load Balance Table #2
+SELECT location_code,
+       bal TotalLoanBalance
+  FROM ggw_loans.gl_total_loan_balances_z
+ ORDER BY bal DESC
+ LIMIT 20
+;
+

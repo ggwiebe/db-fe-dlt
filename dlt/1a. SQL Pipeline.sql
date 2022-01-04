@@ -8,6 +8,15 @@ SELECT *
 
 -- COMMAND ----------
 
+CREATE INCREMENTAL LIVE TABLE BZ_reference_loan_stats
+COMMENT "Raw historical transactions"
+TBLPROPERTIES ("quality" = "bronze")
+AS 
+SELECT *
+  FROM cloud_files('/databricks-datasets/lending-club-loan-stats/LoanStats_*', 'csv')
+
+-- COMMAND ----------
+
 CREATE LIVE TABLE ref_accounting_treatment
 COMMENT "Lookup mapping for accounting codes"
 AS 
@@ -29,15 +38,6 @@ TBLPROPERTIES ("quality" = "silver") AS
    FROM STREAM(LIVE.BZ_raw_txs) txs
   INNER JOIN LIVE.ref_accounting_treatment rat 
           ON txs.accounting_treatment_id = rat.id
-
--- COMMAND ----------
-
-CREATE INCREMENTAL LIVE TABLE BZ_reference_loan_stats
-COMMENT "Raw historical transactions"
-TBLPROPERTIES ("quality" = "bronze")
-AS 
-SELECT *
-  FROM cloud_files('/databricks-datasets/lending-club-loan-stats/LoanStats_*', 'csv')
 
 -- COMMAND ----------
 

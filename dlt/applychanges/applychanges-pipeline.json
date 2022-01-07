@@ -1,0 +1,25 @@
+{
+    "name": "ggw-applychanges",
+    "storage": "/dbfs/Users/glenn.wiebe@databricks.com/dlt_applychanges",
+    "configuration": {
+        "pipelines.applyChangesPreviewEnabled": "true"
+    },
+    "clusters": [
+        {
+            "label": "default",
+            "autoscale": {
+                "min_workers": 1,
+                "max_workers": 3
+            }
+        }
+    ],
+    "libraries": [
+        {
+            "notebook": {
+                "path": "/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/DLTApplyChanges"
+            }
+        }
+    ],
+    "continuous": false,
+    "development": true
+}

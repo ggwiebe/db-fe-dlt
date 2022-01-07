@@ -1,14 +1,14 @@
 -- Databricks notebook source
-%md  
-  
-+----+-----+------+
-|user|movie|rating|
-+----+-----+------+
-|  11| 1753|     4|
-|  11| 1682|     1|
-|  11|  216|     4|
-|  11| 2997|     4|
-|  11| 1259|     3|
+-- MAGIC %md  
+-- MAGIC   
+-- MAGIC +----+-----+------+
+-- MAGIC |user|movie|rating|
+-- MAGIC +----+-----+------+
+-- MAGIC |  11| 1753|     4|
+-- MAGIC |  11| 1682|     1|
+-- MAGIC |  11|  216|     4|
+-- MAGIC |  11| 2997|     4|
+-- MAGIC |  11| 1259|     3|
 
 -- COMMAND ----------
 

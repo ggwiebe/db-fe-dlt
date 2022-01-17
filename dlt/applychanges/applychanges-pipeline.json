@@ -1,6 +1,6 @@
 {
-    "name": "ggw-applychanges",
-    "storage": "/dbfs/Users/glenn.wiebe@databricks.com/dlt_applychanges",
+    "name": "ggw Retail Customers (cdc)",
+    "storage": "dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/dlt_storage",
     "configuration": {
         "pipelines.applyChangesPreviewEnabled": "true"
     },
@@ -16,10 +16,11 @@
     "libraries": [
         {
             "notebook": {
-                "path": "/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/DLTApplyChanges"
+                "path": "/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/CustomerApplyChanges"
             }
         }
     ],
+    "target": "ggw_retail",
     "continuous": false,
     "development": true
 }

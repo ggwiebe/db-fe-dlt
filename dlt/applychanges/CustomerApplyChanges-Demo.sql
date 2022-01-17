@@ -3,49 +3,54 @@
 
 -- COMMAND ----------
 
-DROP DATABASE ggw_retail;
-CREATE DATABASE ggw_retail
-LOCATION "dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/ggw_retail.db";
+CREATE WIDGET TEXT root_location DEFAULT "/Users/glenn.wiebe@databricks.com/";
+CREATE WIDGET TEXT db_name DEFAULT "ggw_retail";
+CREATE WIDGET TEXT data_loc DEFAULT "/data";
+-- REMOVE WIDGET old
 
 -- COMMAND ----------
 
-DESCRIBE DATABASE ggw_retail
+-- DROP DATABASE $db_name;
+CREATE DATABASE $db_name
+LOCATION "$root_location/$db_name/$db_name.db";
+
+-- COMMAND ----------
+
+DESCRIBE DATABASE EXTENDED $db_name
 
 -- COMMAND ----------
 
 -- MAGIC %md ## y. Setup for CloudFiles  
 -- MAGIC   
+-- MAGIC e.g. for ggw_retail, use these:
 -- MAGIC ```
 -- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail
 -- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/data
 -- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/data/in
 -- MAGIC ```
 -- MAGIC   
--- MAGIC Sample data (insert, append, update & delete) in ggw_retail/data
--- MAGIC Copy the specific file into ggw_retail/data/in for CloudFiles to pickup-up the data in the files.
+-- MAGIC Sample data (insert, append, update & delete) in $db_name/data;  
+-- MAGIC Copy the individual files in sequence, to emulate a series of transactions arriving;  
+-- MAGIC Copy from $db_name/data to the $db_name/data/in folder for CloudFiles to pickup-up each individual file in order (and keep track of each)
 
 -- COMMAND ----------
 
--- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/data/in_checkpoint
+-- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/ggw_retail/data/
 
 -- COMMAND ----------
 
--- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/ggw_retail/data
-
--- COMMAND ----------
-
-DROP VIEW customers_raw;
-CREATE OR REPLACE TEMPORARY VIEW customers_raw 
-   (
+-- Create a "table" definition against all CSV files in the data location
+CREATE TABLE $db_name.customers_source 
+  (
       id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
-   )
+  )
  USING CSV
 OPTIONS (
-    path "/Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-1-insert.csv",
+    path "$root_location/$db_name/$data_loc/*.csv",
     header "true",
---     inferSchema "true",
---     mode "FAILFAST",
-    schema 'id int, first_name string, last_name string, email string, active int, update_dt int, update_user string'
+    -- inferSchema "true",
+    mode "FAILFAST",
+    schema 'id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string'
   )
 ;
 
@@ -53,7 +58,14 @@ OPTIONS (
 -- COMMAND ----------
 
 SELECT *
-  FROM customers_raw;
+  FROM $db_name.customers_source
+ ORDER BY update_dt, id ASC;
+
+-- COMMAND ----------
+
+-- MAGIC %md ## CREATE/START DLT PIPELINE!!!  
+-- MAGIC   
+-- MAGIC Once the above infrastructure is in place, start the pipeline (in continuous mode, or start after each of the next steps)
 
 -- COMMAND ----------
 
@@ -65,23 +77,40 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %python
--- MAGIC df = (spark.readStream.format('cloudFiles')
--- MAGIC       .option('cloudFiles.format', 'csv')
--- MAGIC       .option('header', 'true')
--- MAGIC #       .option('inferSchema', 'true')
--- MAGIC       .schema('id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string')
--- MAGIC       .load('/Users/glenn.wiebe@databricks.com/ggw_retail/data/in/')
--- MAGIC       )
--- MAGIC 
--- MAGIC df.writeStream.format('delta') \
--- MAGIC   .option('checkpointLocation', '/Users/glenn.wiebe@databricks.com/ggw_retail/data/in_checkpoint') \
--- MAGIC   .start('/Users/glenn.wiebe@databricks.com/ggw_retail/data/delta/')
+-- Create a "table" definition against all CSV files in the cloudFiles location (e.g. /data/in)
+CREATE TABLE $db_name.customers_raw 
+  (
+      id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
+  )
+ USING CSV
+OPTIONS (
+    path "$root_location/$db_name/$data_loc/in/*.csv",
+    header "true",
+    -- inferSchema "true",
+    mode "FAILFAST",
+    schema 'id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string'
+  )
+;
+
 
 -- COMMAND ----------
 
 SELECT * 
-  FROM ggw_retail.customer_silver
+  FROM $db_name.customers_raw
+ ORDER BY update_dt, id ASC
+;  
+
+-- COMMAND ----------
+
+SELECT * 
+  FROM $db_name.customer_bronze
+ ORDER BY update_dt, id ASC
+;  
+
+-- COMMAND ----------
+
+SELECT * 
+  FROM $db_name.customer_silver
  ORDER BY update_dt, id ASC
 ;  
 
@@ -95,8 +124,40 @@ SELECT *
 
 -- COMMAND ----------
 
--- SELECT * 
---   FROM ggw_retail.customer_bronze;
+-- Re-create a "table" definition against all CSV files in the cloudFiles location (e.g. /data/in)
+CREATE TABLE $db_name.customers_raw 
+  (
+      id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
+  )
+ USING CSV
+OPTIONS (
+    path "$root_location/$db_name/$data_loc/in/*.csv",
+    header "true",
+    -- inferSchema "true",
+    mode "FAILFAST",
+    schema 'id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string'
+  )
+;
+
+-- COMMAND ----------
+
+-- Check Raw
+SELECT * 
+  FROM ggw_retail.customers_raw
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
+-- Check Bronze 
+SELECT * 
+  FROM ggw_retail.customer_bronze
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
+-- Check Silver 
 SELECT * 
   FROM ggw_retail.customer_silver
  ORDER BY update_dt, id ASC
@@ -112,23 +173,15 @@ SELECT *
 
 -- COMMAND ----------
 
--- SELECT * 
---   FROM ggw_retail.customer_bronze;
+-- Check Raw
 SELECT * 
-  FROM ggw_retail.customer_silver
+  FROM ggw_retail.customers_raw
  ORDER BY update_dt, id ASC
 ;
 
 -- COMMAND ----------
 
--- MAGIC %md ## 4. Copy in four set of records - delete
-
--- COMMAND ----------
-
--- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-4-delete.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
-
--- COMMAND ----------
-
+-- Check Bronze 
 SELECT * 
   FROM ggw_retail.customer_bronze
  ORDER BY update_dt, id ASC
@@ -136,6 +189,39 @@ SELECT *
 
 -- COMMAND ----------
 
+-- Check Silver 
+SELECT * 
+  FROM ggw_retail.customer_silver
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
+-- MAGIC %md ## 4. Copy in fourth set of records - delete
+
+-- COMMAND ----------
+
+-- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-4-delete.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+
+-- COMMAND ----------
+
+-- Check Raw
+SELECT * 
+  FROM ggw_retail.customers_raw
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
+-- Check Bronze 
+SELECT * 
+  FROM ggw_retail.customer_bronze
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
+-- Check Silver 
 SELECT * 
   FROM ggw_retail.customer_silver
  ORDER BY update_dt, id ASC
@@ -156,6 +242,10 @@ SELECT *
 -- COMMAND ----------
 
 dbutils.notebook.exit()
+
+-- COMMAND ----------
+
+DROP DATABASE $db_name CASCADE;
 
 -- COMMAND ----------
 

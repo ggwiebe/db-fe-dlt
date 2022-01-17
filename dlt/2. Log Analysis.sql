@@ -1,4 +1,12 @@
 -- Databricks notebook source
+-- MAGIC %md # DLT Event Log
+
+-- COMMAND ----------
+
+-- MAGIC %md ## 0. Setup
+
+-- COMMAND ----------
+
 -- MAGIC %python
 -- MAGIC dbutils.widgets.text('storage_location', 'dbfs:/Users/glenn.wiebe@databricks.com/dlt_loans', 'Storage Location')
 -- MAGIC dbutils.widgets.text('db', 'ggw_loans', 'DB Name')
@@ -20,6 +28,10 @@ CREATE TABLE IF NOT EXISTS ggw_loans.event_log
 USING delta
 LOCATION 'dbfs:/Users/glenn.wiebe@databricks.com/dlt_loans/system/events'
 
+
+-- COMMAND ----------
+
+-- MAGIC %md ## 1. Event Log - Raw Sequence of Events by Timestamp
 
 -- COMMAND ----------
 
@@ -45,6 +57,10 @@ ORDER BY timestamp
 
 -- COMMAND ----------
 
+-- MAGIC %md ## DLT Quality - Flow Events
+
+-- COMMAND ----------
+
 -- MAGIC %sql
 -- MAGIC SELECT
 -- MAGIC   details:flow_definition.output_dataset,
@@ -55,6 +71,10 @@ ORDER BY timestamp
 -- MAGIC FROM event_log
 -- MAGIC WHERE details:flow_definition IS NOT NULL
 -- MAGIC ORDER BY timestamp
+
+-- COMMAND ----------
+
+-- MAGIC %md ## DLT Quality - Pass/Fail Metrics
 
 -- COMMAND ----------
 

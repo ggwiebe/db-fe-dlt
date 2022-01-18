@@ -78,6 +78,7 @@ SELECT *
 -- COMMAND ----------
 
 -- Create a "table" definition against all CSV files in the cloudFiles location (e.g. /data/in)
+-- This cannot be done until some records are in /data/in
 CREATE TABLE $db_name.customers_raw 
   (
       id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string

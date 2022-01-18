@@ -1,5 +1,12 @@
 # Databricks notebook source
-# MAGIC %md # Delta Live Tables - Monitoring
+# MAGIC %md # Delta Live Tables - Monitoring  
+# MAGIC   
+# MAGIC Each DLT Pipeline stands up its own events table in the Storage Location defined on the pipeline.  
+# MAGIC From this table we can see what is happening and the quality of the data passing through it.
+
+# COMMAND ----------
+
+# MAGIC %md ## 0.1 - CONFIG 
 
 # COMMAND ----------
 
@@ -23,9 +30,22 @@ print('storage_path:  {}'.format(storage_path))
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC USE $db_name
+
+# COMMAND ----------
+
+# MAGIC %md ## 0.2 - SETUP 
+
+# COMMAND ----------
+
+# MAGIC %sql
 # MAGIC CREATE TABLE IF NOT EXISTS $db_name.event_log
 # MAGIC  USING delta
 # MAGIC LOCATION '$root_location$db_name$storage_loc/system/events'
+
+# COMMAND ----------
+
+# MAGIC %md ## 1 - DLT Events 
 
 # COMMAND ----------
 
@@ -46,39 +66,69 @@ print('storage_path:  {}'.format(storage_path))
 
 # COMMAND ----------
 
-
+# MAGIC %md ## 2 - DLT Lineage 
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC -- DROP VIEW customers_raw;
-# MAGIC CREATE OR REPLACE VIEW ggw_retail.customers_raw 
-# MAGIC --    (
-# MAGIC --       id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
-# MAGIC --    )
-# MAGIC  USING CSV
-# MAGIC OPTIONS (
-# MAGIC     path "/Users/glenn.wiebe@databricks.com/ggw_retail/data/*.csv",
-# MAGIC     header "true",
-# MAGIC --     inferSchema "true",
-# MAGIC --     mode "FAILFAST",
-# MAGIC     schema 'id int, first_name string, last_name string, email string, active int, update_dt int, update_user string'
-# MAGIC   )
+# MAGIC -- List of output datasets by type and the most recent change
+# MAGIC SELECT details:flow_definition.output_dataset output_dataset,
+# MAGIC        details:flow_definition.flow_type,
+# MAGIC        MAX(timestamp)
+# MAGIC   FROM $db_name.event_log
+# MAGIC  WHERE details:flow_definition.output_dataset IS NOT NULL
+# MAGIC  GROUP BY details:flow_definition.output_dataset,
+# MAGIC           details:flow_definition.schema,
+# MAGIC           details:flow_definition.flow_type
 # MAGIC ;
 
 # COMMAND ----------
 
--- Create or replace view for `experienced_employee` with comments.
-> CREATE OR REPLACE VIEW experienced_employee
-    (id COMMENT 'Unique identification number', Name)
-    COMMENT 'View for experienced employees'
-    AS SELECT id, name
-         FROM all_employee
-        WHERE working_years > 5;
+# MAGIC %sql
+# MAGIC ----------------------------------------------------------------------------------------
+# MAGIC -- Lineage
+# MAGIC ----------------------------------------------------------------------------------------
+# MAGIC SELECT max_timestamp,
+# MAGIC        details:flow_definition.output_dataset,
+# MAGIC        details:flow_definition.input_datasets,
+# MAGIC        details:flow_definition.flow_type,
+# MAGIC        details:flow_definition.schema,
+# MAGIC        details:flow_definition.explain_text,
+# MAGIC        details:flow_definition
+# MAGIC   FROM $db_name.event_log e
+# MAGIC  INNER JOIN (
+# MAGIC               SELECT details:flow_definition.output_dataset output_dataset,
+# MAGIC                      MAX(timestamp) max_timestamp
+# MAGIC                 FROM $db_name.event_log
+# MAGIC                WHERE details:flow_definition.output_dataset IS NOT NULL
+# MAGIC                GROUP BY details:flow_definition.output_dataset
+# MAGIC             ) m
+# MAGIC   WHERE e.timestamp = m.max_timestamp
+# MAGIC     AND e.details:flow_definition.output_dataset = m.output_dataset
+# MAGIC --    AND e.details:flow_definition IS NOT NULL
+# MAGIC  ORDER BY e.details:flow_definition.output_dataset
+# MAGIC ;
 
--- Create a temporary view `subscribed_movies` if it does not exist.
-> CREATE TEMPORARY VIEW IF NOT EXISTS subscribed_movies
-    AS SELECT mo.member_id, mb.full_name, mo.movie_title
-         FROM movies AS mo
-         INNER JOIN members AS mb
-            ON mo.member_id = mb.id;
+# COMMAND ----------
+
+# MAGIC %md ## 3 - Quality Metrics 
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   id,
+# MAGIC   expectations.dataset,
+# MAGIC   expectations.name,
+# MAGIC   expectations.failed_records,
+# MAGIC   expectations.passed_records
+# MAGIC FROM(
+# MAGIC   SELECT 
+# MAGIC     id,
+# MAGIC     timestamp,
+# MAGIC     details:flow_progress.metrics,
+# MAGIC     details:flow_progress.data_quality.dropped_records,
+# MAGIC     explode(from_json(details:flow_progress:data_quality:expectations
+# MAGIC              ,schema_of_json("[{'name':'str', 'dataset':'str', 'passed_records':42, 'failed_records':42}]"))) expectations
+# MAGIC   FROM event_log
+# MAGIC   WHERE details:flow_progress.metrics IS NOT NULL) data_quality

@@ -139,9 +139,17 @@ print('storage_path:  {}'.format(storage_path))
 
 # COMMAND ----------
 
+# MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-2-append.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/customer-99-missing-append.csv
+
+# COMMAND ----------
+
+# MAGIC %fs ls /Users/glenn.wiebe@databricks.com/ggw_retail/data/in
+
+# COMMAND ----------
+
 # MAGIC %sql 
-# MAGIC -- Get details from Gold Load Balance Table #2
-# MAGIC SELECT DISTINCT COUNT(id) CustomerCount,
+# MAGIC -- Get details from Silver merged table
+# MAGIC SELECT DISTINCT COUNT(id) RecordCount,
 # MAGIC        MAX(id) MaxId,
 # MAGIC        MAX(update_dt) MostRecentUpdate
 # MAGIC   FROM $db_name.customer_silver
@@ -152,14 +160,50 @@ print('storage_path:  {}'.format(storage_path))
 # COMMAND ----------
 
 # MAGIC %sql 
-# MAGIC -- Get details from Gold Load Balance Table #2
-# MAGIC SELECT DISTINCT COUNT(id) RecordCount,
-# MAGIC        
+# MAGIC -- Get details from Bronze landed table
+# MAGIC SELECT COUNT(DISTINCT id) DistinctRecordCount,
+# MAGIC        COUNT(1) RecordCount,
 # MAGIC        MAX(id) MaxId,
 # MAGIC        MAX(update_dt) MostRecentUpdate
 # MAGIC   FROM $db_name.customer_bronze
 # MAGIC --   ORDER BY bal DESC
 # MAGIC  LIMIT 20
+# MAGIC ;
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC -- -- View is needed to be able to perform join equality on computed value input_file_name()
+# MAGIC 
+# MAGIC -- Source system (not usually visible to Databricks)
+# MAGIC -- CREATE VIEW $db_name.customers_source_inputfiles_v
+# MAGIC -- AS
+# MAGIC --     SELECT *,
+# MAGIC --            input_file_name() AS input_file_name 
+# MAGIC --       FROM ggw_retail.customers_source
+# MAGIC -- ;
+# MAGIC 
+# MAGIC -- Input cloudFiles:
+# MAGIC -- CREATE OR REPLACE VIEW $db_name.customers_raw_inputfiles_v
+# MAGIC -- AS
+# MAGIC --     SELECT *,
+# MAGIC --            input_file_name() AS input_file_name 
+# MAGIC --       FROM ggw_retail.customers_raw
+# MAGIC -- ;
+# MAGIC 
+# MAGIC -- Get files in source not landed in Bronze
+# MAGIC -- source input_file_name: dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-1-insert.csv
+# MAGIC -- raw    input_file_name: dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/data/in/customer-1-insert.csv
+# MAGIC -- landed input_file_name: dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/data/in/customer-1-insert.csv
+# MAGIC 
+# MAGIC SELECT *
+# MAGIC   FROM $db_name.customers_raw_inputfiles_v
+# MAGIC  WHERE input_file_name NOT IN (
+# MAGIC                                 SELECT DISTINCT ('dbfs:' || input_file_name) distinct_input_file_name
+# MAGIC                                            FROM $db_name.customer_bronze
+# MAGIC                                           ORDER BY distinct_input_file_name
+# MAGIC                               )
+# MAGIC  ORDER BY update_dt, id ASC
 # MAGIC ;
 
 # COMMAND ----------

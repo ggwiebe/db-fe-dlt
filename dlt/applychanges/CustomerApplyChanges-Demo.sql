@@ -233,6 +233,18 @@ dbutils.notebook.exit()
 
 -- COMMAND ----------
 
+-- MAGIC %md ## 99. Error Scenario  
+-- MAGIC   
+-- MAGIC The below scenario is that a file has been sent to cloudFiles landing area, but has not landed into Bronze (yet).  
+-- MAGIC Use the next step to copy in this file, but do not start dlt pipeline, so from a monitoring perspective the file is not processed!  
+-- MAGIC View the dashboard and see missing row.
+
+-- COMMAND ----------
+
+-- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-99-missing-updates.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+
+-- COMMAND ----------
+
 -- MAGIC %md ## 99. Reset the csv files
 
 -- COMMAND ----------

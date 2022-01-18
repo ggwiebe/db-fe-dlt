@@ -29,7 +29,8 @@ CREATE INCREMENTAL LIVE TABLE customer_bronze
     email string,
     active int,
     update_dt timestamp,
-    update_user string
+    update_user string,
+    input_file_name string
   )
 TBLPROPERTIES ("quality" = "bronze")
 COMMENT "New customer data incrementally ingested from cloud object storage landing zone"
@@ -41,7 +42,8 @@ SELECT
     email,
     CAST(active AS int),
     CAST(update_dt AS timestamp),
-    update_user
+    update_user,
+    input_file_name() input_file_name
   FROM cloud_files('/Users/glenn.wiebe@databricks.com/ggw_retail/data/in/', 'csv')
 
 -- COMMAND ----------
@@ -67,8 +69,10 @@ AS SELECT id,
           UPPER(last_name) as last_name,
           email,
           active,
-          current_timestamp() update_dt,
-          current_user() update_user
+          update_dt update_dt,
+          update_user,
+          current_timestamp() dlt_update_dt,
+          current_user() dlt_update_user
      FROM STREAM(live.customer_bronze)
 
 -- COMMAND ----------
@@ -86,9 +90,3 @@ FROM stream(live.customer_bronze_clean_v)
   APPLY AS DELETE WHEN active = 0
   SEQUENCE BY update_dt
 ;
-
--- COMMAND ----------
-
---   SEQUENCE BY id
---   COLUMNS * EXCEPT()
---   COLUMNS * EXCEPT (update_dt, update_user)

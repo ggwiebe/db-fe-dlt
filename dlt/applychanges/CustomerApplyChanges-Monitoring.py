@@ -132,3 +132,36 @@ print('storage_path:  {}'.format(storage_path))
 # MAGIC              ,schema_of_json("[{'name':'str', 'dataset':'str', 'passed_records':42, 'failed_records':42}]"))) expectations
 # MAGIC   FROM event_log
 # MAGIC   WHERE details:flow_progress.metrics IS NOT NULL) data_quality
+
+# COMMAND ----------
+
+# MAGIC %md ## 4. Business Aggregate Checks
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC -- Get details from Gold Load Balance Table #2
+# MAGIC SELECT DISTINCT COUNT(id) CustomerCount,
+# MAGIC        MAX(id) MaxId,
+# MAGIC        MAX(update_dt) MostRecentUpdate
+# MAGIC   FROM $db_name.customer_silver
+# MAGIC --   ORDER BY bal DESC
+# MAGIC  LIMIT 20
+# MAGIC ;
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC -- Get details from Gold Load Balance Table #2
+# MAGIC SELECT DISTINCT COUNT(id) RecordCount,
+# MAGIC        
+# MAGIC        MAX(id) MaxId,
+# MAGIC        MAX(update_dt) MostRecentUpdate
+# MAGIC   FROM $db_name.customer_bronze
+# MAGIC --   ORDER BY bal DESC
+# MAGIC  LIMIT 20
+# MAGIC ;
+
+# COMMAND ----------
+
+

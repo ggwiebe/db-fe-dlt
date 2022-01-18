@@ -10,7 +10,7 @@ CREATE WIDGET TEXT data_loc DEFAULT "/data";
 
 -- COMMAND ----------
 
--- DROP DATABASE $db_name;
+--DROP DATABASE $db_name CASCADE;
 CREATE DATABASE $db_name
 LOCATION "$root_location/$db_name/$db_name.db";
 
@@ -103,6 +103,10 @@ SELECT *
 
 -- COMMAND ----------
 
+-- MAGIC %md ### Start DLT if using triggered approach
+
+-- COMMAND ----------
+
 SELECT * 
   FROM $db_name.customer_bronze
  ORDER BY update_dt, id ASC
@@ -125,20 +129,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- Re-create a "table" definition against all CSV files in the cloudFiles location (e.g. /data/in)
-CREATE TABLE $db_name.customers_raw 
-  (
-      id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
-  )
- USING CSV
-OPTIONS (
-    path "$root_location/$db_name/$data_loc/in/*.csv",
-    header "true",
-    -- inferSchema "true",
-    mode "FAILFAST",
-    schema 'id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string'
-  )
-;
+-- MAGIC %md ### Again start pipeline for latest records
 
 -- COMMAND ----------
 
@@ -174,6 +165,10 @@ SELECT *
 
 -- COMMAND ----------
 
+-- MAGIC %md ### Yet again start pipeline
+
+-- COMMAND ----------
+
 -- Check Raw
 SELECT * 
   FROM ggw_retail.customers_raw
@@ -206,6 +201,10 @@ SELECT *
 
 -- COMMAND ----------
 
+-- MAGIC %md ### Final start of pipeline to pickup Delete
+
+-- COMMAND ----------
+
 -- Check Raw
 SELECT * 
   FROM ggw_retail.customers_raw
@@ -230,6 +229,10 @@ SELECT *
 
 -- COMMAND ----------
 
+dbutils.notebook.exit()
+
+-- COMMAND ----------
+
 -- MAGIC %md ## 99. Reset the csv files
 
 -- COMMAND ----------
@@ -238,11 +241,11 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
 
 -- COMMAND ----------
 
-dbutils.notebook.exit()
+-- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
 
 -- COMMAND ----------
 
@@ -250,7 +253,9 @@ DROP DATABASE $db_name CASCADE;
 
 -- COMMAND ----------
 
--- MAGIC %md ## Delta Lake based source table
+-- MAGIC %md ## Delta Lake based source table  
+-- MAGIC   
+-- MAGIC This is a data model for the above csv input files.
 
 -- COMMAND ----------
 

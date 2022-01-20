@@ -10,7 +10,7 @@ CREATE WIDGET TEXT data_loc DEFAULT "/data";
 
 -- COMMAND ----------
 
---DROP DATABASE $db_name CASCADE;
+-- DROP DATABASE $db_name CASCADE;
 CREATE DATABASE $db_name
 LOCATION "$root_location/$db_name/$db_name.db";
 

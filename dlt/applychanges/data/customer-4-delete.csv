@@ -1,2 +1,2 @@
-"id","first_name","last_name","email","active","active_end_date","update_dt","update_user"
-1002,Glenn,Wiebe,glenn@wiebes.net,0,2022-01-14,2022-01-14 09:01:12.000,glenn.wiebe@databricks.com
+"id","first_name","last_name","email","department","active","active_end_date","update_dt","update_user"
+1002,Glenn,Wiebe,glenn@wiebes.net,0,1,2022-01-14,2022-01-14 09:01:12.000,glenn.wiebe@databricks.com

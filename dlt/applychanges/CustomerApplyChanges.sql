@@ -28,6 +28,7 @@ CREATE INCREMENTAL LIVE TABLE customer_bronze
     last_name string,
     email string,
     active int,
+    active_end_date date,
     update_dt timestamp,
     update_user string,
     input_file_name string
@@ -41,10 +42,11 @@ SELECT
     last_name,
     email,
     CAST(active AS int),
+    CAST(active_end_date AS date),
     CAST(update_dt AS timestamp),
     update_user,
     input_file_name() input_file_name
-  FROM cloud_files('/Users/glenn.wiebe@databricks.com/ggw_retail/data/in/', 'csv')
+  FROM cloud_files('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/', 'csv', map('header', 'true', 'schema', 'id int, first_name string, last_name string, email string, active int, active_end_date date, update_dt timestamp, update_user string, input_file_name string'))
 
 -- COMMAND ----------
 
@@ -69,10 +71,12 @@ AS SELECT id,
           UPPER(last_name) as last_name,
           email,
           active,
-          update_dt update_dt,
+          active_end_date,
+          update_dt,
           update_user,
-          current_timestamp() dlt_update_dt,
-          current_user() dlt_update_user
+          current_timestamp() dlt_ingest_dt,
+          "CustomerApplyChanges" dlt_ingest_procedure,
+          current_user() dlt_ingest_principal
      FROM STREAM(live.customer_bronze)
 
 -- COMMAND ----------
@@ -85,7 +89,7 @@ COMMENT "Clean, merged customers"
 -- COMMAND ----------
 
 APPLY CHANGES INTO live.customer_silver
-FROM stream(live.customer_bronze_clean_v)
+FROM stream(live.customer_bronze)
   KEYS (id)
   APPLY AS DELETE WHEN active = 0
   SEQUENCE BY update_dt

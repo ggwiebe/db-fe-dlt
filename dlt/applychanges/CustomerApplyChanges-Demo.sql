@@ -3,7 +3,8 @@
 
 -- COMMAND ----------
 
-CREATE WIDGET TEXT root_location DEFAULT "/Users/glenn.wiebe@databricks.com/";
+-- CREATE WIDGET TEXT root_location DEFAULT "/Users/glenn.wiebe@databricks.com/";
+CREATE WIDGET TEXT root_location DEFAULT "abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/";
 CREATE WIDGET TEXT db_name DEFAULT "ggw_retail";
 CREATE WIDGET TEXT data_loc DEFAULT "/data";
 -- REMOVE WIDGET old
@@ -16,7 +17,7 @@ LOCATION "$root_location/$db_name/$db_name.db";
 
 -- COMMAND ----------
 
-DESCRIBE DATABASE EXTENDED $db_name
+DESCRIBE DATABASE EXTENDED $db_name;
 
 -- COMMAND ----------
 
@@ -35,11 +36,11 @@ DESCRIBE DATABASE EXTENDED $db_name
 
 -- COMMAND ----------
 
--- MAGIC %fs ls /Users/glenn.wiebe@databricks.com/ggw_retail/data/
+-- MAGIC %fs ls abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/
 
 -- COMMAND ----------
 
--- Create a "table" definition against all CSV files in the data location
+-- Create a "table" definition against all CSV files in the data location; This emulates the source system (pre-load, all data that will be loaded)
 CREATE TABLE $db_name.customers_source 
   (
       id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
@@ -73,7 +74,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-1-insert.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-1-insert.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
 
 -- COMMAND ----------
 

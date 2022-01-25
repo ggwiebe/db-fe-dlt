@@ -28,15 +28,16 @@ DESCRIBE DATABASE EXTENDED $db_name;
 -- COMMAND ----------
 
 -- Customer Channel Reference Table
-DROP TABLE $db_name.customer_channel;
-CREATE TABLE IF NOT EXISTS $db_name.customer_channel (
+-- DROP TABLE $db_name.channel;
+CREATE TABLE IF NOT EXISTS $db_name.channel (
   channelId integer, 
-  channelName string
+  channelName string,
+  description string
 );
-INSERT INTO $db_name.customer_channel VALUES (1, 'RETAIL');
-INSERT INTO $db_name.customer_channel VALUES (2, 'WEB');
-INSERT INTO $db_name.customer_channel VALUES (3, 'PARTNER');
-INSERT INTO $db_name.customer_channel VALUES (9, 'OTHER');
+INSERT INTO $db_name.channel VALUES (1, 'RETAIL', 'Customer originated from Retail Stores');
+INSERT INTO $db_name.channel VALUES (2, 'WEB', 'Customer originated from Online properties');
+INSERT INTO $db_name.channel VALUES (3, 'PARTNER', 'Customer referred from Partners');
+INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer origination');
 
 -- COMMAND ----------
 
@@ -265,6 +266,14 @@ SELECT *
 
 -- COMMAND ----------
 
+-- Check Quarantine 
+SELECT * 
+  FROM ggw_retail.customer_silver_quarantine
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
 -- Check GOLD 
 SELECT * 
   FROM ggw_retail.channel_customers_gold
@@ -279,7 +288,15 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-98-bad-data.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-97-bad-data.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+
+-- COMMAND ----------
+
+-- Check Quarantine 
+SELECT * 
+  FROM ggw_retail.customer_silver_quarantine
+ ORDER BY update_dt, id ASC
+;
 
 -- COMMAND ----------
 

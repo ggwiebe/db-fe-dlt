@@ -1,4 +1,10 @@
 -- Databricks notebook source
+-- MAGIC %md ## DLT Architecture  
+-- MAGIC   
+-- MAGIC ![DLT Technical Architecture](https://raw.githubusercontent.com/ggwiebe/db-fe-dlt/main/dlt/applychanges/images/DLT_Technical_Architecture.png)
+
+-- COMMAND ----------
+
 -- MAGIC %md ## x. Setup for Database  
 
 -- COMMAND ----------

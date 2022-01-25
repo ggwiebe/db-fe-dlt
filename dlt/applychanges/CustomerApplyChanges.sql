@@ -52,11 +52,11 @@ SELECT
 
 -- COMMAND ----------
 
--- REFERENCE - View for customer_channel table 
-CREATE LIVE VIEW customer_channel_v
-COMMENT "View built against Customer_Channel reference data."
+-- REFERENCE - View for Sales Channel reference table 
+CREATE LIVE VIEW channel_v
+COMMENT "View built against Channel reference data."
 AS SELECT *
-     FROM ggw_retail.customer_channel
+     FROM ggw_retail.channel
 
 -- COMMAND ----------
 
@@ -90,7 +90,7 @@ AS SELECT c.id,
           "CustomerApplyChanges" dlt_ingest_procedure,
           current_user() dlt_ingest_principal
      FROM STREAM(live.customer_bronze) c
-     LEFT JOIN live.customer_channel_v sc
+     LEFT JOIN live.channel_v sc
        ON c.channel = sc.channelId
 
 -- COMMAND ----------
@@ -111,12 +111,12 @@ FROM stream(live.customer_bronze2silver_v)
 
 -- COMMAND ----------
 
--- MAGIC %md ### 2. GOLD - Analytics Table
+-- MAGIC %md ### 3. GOLD - Analytics Table
 -- MAGIC   
 
 -- COMMAND ----------
 
--- REFERENCE - View for customer_channel table 
+-- REFERENCE - Table for customers by channel table 
 CREATE LIVE TABLE channel_customers_gold
 COMMENT "Aggregate Customers by Sales Channel."
 AS SELECT sales_channel,

@@ -10,7 +10,7 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text('root_location', '/Users/glenn.wiebe@databricks.com/')
+dbutils.widgets.text('root_location', 'abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/')
 dbutils.widgets.text('db_name', 'ggw_retail')
 dbutils.widgets.text('data_loc','/data')
 dbutils.widgets.text('storage_loc','/dlt_storage')

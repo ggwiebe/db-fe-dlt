@@ -1,6 +1,6 @@
 {
-    "name": "ggw Retail Customers (cdc)",
-    "storage": "dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/dlt_storage",
+    "name": "GGW Retail Customers (cdc)",
+    "storage": "abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/dlt_storage",
     "configuration": {
         "pipelines.applyChangesPreviewEnabled": "true",
         "spark.hadoop.fs.azure.account.auth.type.ggwstdlrs.dfs.core.windows.net": "OAuth",
@@ -23,9 +23,14 @@
             "notebook": {
                 "path": "/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/CustomerApplyChanges"
             }
+        },
+        {
+            "notebook": {
+                "path": "/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/CustomerApplyChanges-quarantine"
+            }
         }
     ],
     "target": "ggw_retail",
-    "continuous": true,
+    "continuous": false,
     "development": true
 }

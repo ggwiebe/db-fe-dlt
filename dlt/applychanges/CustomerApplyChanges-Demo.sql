@@ -21,6 +21,26 @@ DESCRIBE DATABASE EXTENDED $db_name;
 
 -- COMMAND ----------
 
+-- MAGIC %md ### Create Customer Channel reference table. 
+-- MAGIC   
+-- MAGIC Have a table to use to show joins and some analytic dimensionality
+
+-- COMMAND ----------
+
+-- Customer Channel Reference Table
+-- DROP TABLE $db_name.channel;
+CREATE TABLE IF NOT EXISTS $db_name.channel (
+  channelId integer, 
+  channelName string,
+  description string
+);
+INSERT INTO $db_name.channel VALUES (1, 'RETAIL', 'Customer originated from Retail Stores');
+INSERT INTO $db_name.channel VALUES (2, 'WEB', 'Customer originated from Online properties');
+INSERT INTO $db_name.channel VALUES (3, 'PARTNER', 'Customer referred from Partners');
+INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer origination');
+
+-- COMMAND ----------
+
 -- MAGIC %md ## y. Setup for CloudFiles  
 -- MAGIC   
 -- MAGIC e.g. for ggw_retail, use these:
@@ -41,9 +61,10 @@ DESCRIBE DATABASE EXTENDED $db_name;
 -- COMMAND ----------
 
 -- Create a "table" definition against all CSV files in the data location; This emulates the source system (pre-load, all data that will be loaded)
+DROP TABLE $db_name.customers_source ;
 CREATE TABLE $db_name.customers_source 
   (
-      id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
+      id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string
   )
  USING CSV
 OPTIONS (
@@ -51,7 +72,7 @@ OPTIONS (
     header "true",
     -- inferSchema "true",
     mode "FAILFAST",
-    schema 'id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string'
+    schema 'id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string, '
   )
 ;
 
@@ -80,17 +101,18 @@ SELECT *
 
 -- Create a "table" definition against all CSV files in the cloudFiles location (e.g. /data/in)
 -- This cannot be done until some records are in /data/in
+DROP TABLE $db_name.customers_raw;
 CREATE TABLE $db_name.customers_raw 
   (
-      id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string
+      id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string
   )
  USING CSV
 OPTIONS (
     path "$root_location/$db_name/$data_loc/in/*.csv",
     header "true",
     -- inferSchema "true",
-    mode "FAILFAST",
-    schema 'id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string'
+    mode "PERMISSIVE", -- "FAILFAST",
+    schema 'id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string, input_file_name string'
   )
 ;
 
@@ -111,7 +133,7 @@ SELECT *
 SELECT * 
   FROM $db_name.customer_bronze
  ORDER BY update_dt, id ASC
-;  
+;
 
 -- COMMAND ----------
 
@@ -126,7 +148,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-2-append.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-2-append.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
 
 -- COMMAND ----------
 
@@ -158,11 +180,18 @@ SELECT *
 
 -- COMMAND ----------
 
+-- Check GOLD 
+SELECT * 
+  FROM ggw_retail.channel_customers_gold
+;
+
+-- COMMAND ----------
+
 -- MAGIC %md ## 3. Copy in third set of records - Update
 
 -- COMMAND ----------
 
--- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-3-update.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-3-update.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
 
 -- COMMAND ----------
 
@@ -194,11 +223,18 @@ SELECT *
 
 -- COMMAND ----------
 
+-- Check GOLD 
+SELECT * 
+  FROM ggw_retail.channel_customers_gold
+;
+
+-- COMMAND ----------
+
 -- MAGIC %md ## 4. Copy in fourth set of records - delete
 
 -- COMMAND ----------
 
--- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-4-delete.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-4-delete.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
 
 -- COMMAND ----------
 
@@ -230,7 +266,37 @@ SELECT *
 
 -- COMMAND ----------
 
-dbutils.notebook.exit()
+-- Check Quarantine 
+SELECT * 
+  FROM ggw_retail.customer_silver_quarantine
+ ORDER BY update_dt, id ASC
+;
+
+-- COMMAND ----------
+
+-- Check GOLD 
+SELECT * 
+  FROM ggw_retail.channel_customers_gold
+;
+
+-- COMMAND ----------
+
+-- MAGIC %md ## 98. Error Scenario - bad data 
+-- MAGIC   
+-- MAGIC The below error scenario occurs when bad data is sent into the DLT pipeline.
+-- MAGIC Use the next step to copy in this file, start the DLT pipeline and watch the DLT UI Quality Metrics panel for errors!
+
+-- COMMAND ----------
+
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-97-bad-data.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+
+-- COMMAND ----------
+
+-- Check Quarantine 
+SELECT * 
+  FROM ggw_retail.customer_silver_quarantine
+ ORDER BY update_dt, id ASC
+;
 
 -- COMMAND ----------
 
@@ -242,11 +308,15 @@ dbutils.notebook.exit()
 
 -- COMMAND ----------
 
--- MAGIC %fs cp /Users/glenn.wiebe@databricks.com/ggw_retail/data/customer-99-missing-updates.csv /Users/glenn.wiebe@databricks.com/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-99-missing-updates.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
 
 -- COMMAND ----------
 
--- MAGIC %md ## 99. Reset the csv files
+dbutils.notebook.exit()
+
+-- COMMAND ----------
+
+-- MAGIC %md ## -1. Reset the csv files
 
 -- COMMAND ----------
 
@@ -355,3 +425,7 @@ VALUES
 -- UPDATE ggw_retail.customer
 --  WHERE id = 1002
 -- ;
+
+-- COMMAND ----------
+
+DESCRIBE TABLE EXTENDED ggw_retail.customer_silver;

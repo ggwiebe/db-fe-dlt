@@ -119,6 +119,7 @@ OPTIONS (
 
 -- COMMAND ----------
 
+REFRESH TABLE $db_name.customers_raw;
 SELECT * 
   FROM $db_name.customers_raw
  ORDER BY update_dt, id ASC
@@ -157,6 +158,7 @@ SELECT *
 -- COMMAND ----------
 
 -- Check Raw
+REFRESH TABLE $db_name.customers_raw;
 SELECT * 
   FROM ggw_retail.customers_raw
  ORDER BY update_dt, id ASC
@@ -200,6 +202,7 @@ SELECT *
 -- COMMAND ----------
 
 -- Check Raw
+REFRESH TABLE $db_name.customers_raw;
 SELECT * 
   FROM ggw_retail.customers_raw
  ORDER BY update_dt, id ASC
@@ -243,6 +246,7 @@ SELECT *
 -- COMMAND ----------
 
 -- Check Raw
+REFRESH TABLE $db_name.customers_raw;
 SELECT * 
   FROM ggw_retail.customers_raw
  ORDER BY update_dt, id ASC
@@ -288,7 +292,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-97-bad-data.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+-- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-98-bad-data.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
 
 -- COMMAND ----------
 

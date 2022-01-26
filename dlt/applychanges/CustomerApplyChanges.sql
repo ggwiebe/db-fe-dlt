@@ -1,4 +1,10 @@
 -- Databricks notebook source
+-- MAGIC %md ## Delta Live Table - Customer Change Data Capture Demo. 
+-- MAGIC   
+-- MAGIC ![DLT Process Flow](https://raw.githubusercontent.com/ggwiebe/db-fe-dlt/main/dlt/applychanges/images/DLT_Process_Flow.png)
+
+-- COMMAND ----------
+
 -- MAGIC %md ### 0. Raw - Access Stream  
 -- MAGIC   
 -- MAGIC **Common Storage Format:** CloudFiles, Kafka, (non-DLT) Delta tables, etc.  
@@ -55,7 +61,9 @@ SELECT
 -- REFERENCE - View for Sales Channel reference table 
 CREATE LIVE VIEW channel_v
 COMMENT "View built against Channel reference data."
-AS SELECT *
+AS SELECT channelId,
+          channelName,
+          description
      FROM ggw_retail.channel
 
 -- COMMAND ----------
@@ -116,7 +124,7 @@ FROM stream(live.customer_bronze2silver_v)
 
 -- COMMAND ----------
 
--- REFERENCE - Table for customers by channel table 
+-- SERVE - Aggregate Customers by Sales Channel 
 CREATE LIVE TABLE channel_customers_gold
 COMMENT "Aggregate Customers by Sales Channel."
 AS SELECT sales_channel,

@@ -16,6 +16,7 @@ TBLPROPERTIES ("quality" = "reference")
 COMMENT "Country Reference Table"
 AS 
 SELECT *,
+       current_timestamp() input_dt,
        input_file_name() input_file_name
   FROM cloud_files('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_ods/data/in/Countries-Continents*', 'csv', 
        map('header', 'true', 'schema', 'Continent string, Country string'))
@@ -34,6 +35,7 @@ TBLPROPERTIES ("quality" = "bronze")
 COMMENT "Latest Case Counts by Country ingested from cloud object storage landing zone"
 AS 
 SELECT *,
+       current_timestamp() input_dt,
        input_file_name() input_file_name
   FROM cloud_files('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_ods/data/in/countries-aggregated*', 'csv', 
        map('header', 'true', 'schema', 'Date date, Country string, Confirmed int, Recovered int, Deaths int'))

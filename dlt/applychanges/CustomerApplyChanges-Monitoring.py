@@ -39,6 +39,7 @@ print('storage_path:  {}'.format(storage_path))
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC -- DROP TABLE $db_name.event_log;
 # MAGIC CREATE TABLE IF NOT EXISTS $db_name.event_log
 # MAGIC  USING delta
 # MAGIC LOCATION '$root_location$db_name$storage_loc/system/events'

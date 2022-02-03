@@ -25,8 +25,7 @@
 
 -- COMMAND ----------
 
--- -- Done in Python to get proper schema inferencing
--- -- BRONZE - Read raw streaming file reader for "new" customer records
+-- BRONZE - CloudFiles AutoLoader reads raw streaming files for "new" customer records
 CREATE INCREMENTAL LIVE TABLE customer_bronze
   (
     id int COMMENT 'Casted to int',
@@ -38,7 +37,7 @@ CREATE INCREMENTAL LIVE TABLE customer_bronze
     active_end_date date,
     update_dt timestamp,
     update_user string,
-    input_file_name string
+    input_file_name string COMMENT 'Data record was auto-loaded from this input file'
   )
 TBLPROPERTIES ("quality" = "bronze")
 COMMENT "New customer data incrementally ingested from cloud object storage landing zone"
@@ -58,8 +57,12 @@ SELECT
 
 -- COMMAND ----------
 
+-- MAGIC %md #### External Reference data used when enriching silver
+
+-- COMMAND ----------
+
 -- REFERENCE - View for Sales Channel reference table 
-CREATE LIVE VIEW channel_v
+CREATE LIVE VIEW sales_channel_v
 COMMENT "View built against Channel reference data."
 AS SELECT channelId,
           channelName,
@@ -98,11 +101,12 @@ AS SELECT c.id,
           "CustomerApplyChanges" dlt_ingest_procedure,
           current_user() dlt_ingest_principal
      FROM STREAM(live.customer_bronze) c
-     LEFT JOIN live.channel_v sc
+     LEFT JOIN live.sales_channel_v sc
        ON c.channel = sc.channelId
 
 -- COMMAND ----------
 
+-- SILVER - Incremental Customer table with APPLY CHANGES INTO change handling
 CREATE INCREMENTAL LIVE TABLE customer_silver
 TBLPROPERTIES ("quality" = "silver")
 COMMENT "Clean, merged customers"

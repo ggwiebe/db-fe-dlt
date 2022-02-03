@@ -1,6 +1,7 @@
 -- Databricks notebook source
 -- MAGIC %md # Setup Database & File System for Pipeline
 -- MAGIC   
+-- MAGIC ![Notebook Ingestion Job Flow](https://github.com/ggwiebe/db-fe-dlt/raw/main/dlt/Ingest2Egress/Images/DLT-Jobs.png)
 
 -- COMMAND ----------
 

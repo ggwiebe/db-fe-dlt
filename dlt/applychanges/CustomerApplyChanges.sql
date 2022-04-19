@@ -54,6 +54,7 @@ SELECT
     update_user,
     input_file_name() input_file_name
   FROM cloud_files('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/', 'csv', map('header', 'true', 'schema', 'id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string, input_file_name string'))
+;
 
 -- COMMAND ----------
 
@@ -68,6 +69,7 @@ AS SELECT channelId,
           channelName,
           description
      FROM ggw_retail.channel
+;
 
 -- COMMAND ----------
 
@@ -103,6 +105,7 @@ AS SELECT c.id,
      FROM STREAM(live.customer_bronze) c
      LEFT JOIN live.sales_channel_v sc
        ON c.channel = sc.channelId
+;
 
 -- COMMAND ----------
 
@@ -136,3 +139,4 @@ AS SELECT sales_channel,
           MAX(update_dt) most_recent_customer_update_dt
      FROM live.customer_silver
     GROUP BY sales_channel
+;

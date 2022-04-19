@@ -17,8 +17,13 @@ CREATE WIDGET TEXT data_loc DEFAULT "/data";
 
 -- COMMAND ----------
 
+-- MAGIC %python
+-- MAGIC db_name = dbutils.widgets.get('db_name')
+
+-- COMMAND ----------
+
 -- DROP DATABASE $db_name CASCADE;
-CREATE DATABASE $db_name
+CREATE DATABASE IF NOT EXISTS $db_name
 LOCATION "$root_location/$db_name/$db_name.db";
 
 -- COMMAND ----------
@@ -62,7 +67,10 @@ INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer originat
 
 -- COMMAND ----------
 
--- MAGIC %fs ls abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/
+-- MAGIC %python
+-- MAGIC dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/in'.format(db_name))
+-- MAGIC dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/out'.format(db_name))
+-- MAGIC dbutils.fs.ls('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/{}/data/'.format(db_name))
 
 -- COMMAND ----------
 

@@ -5,7 +5,9 @@
 
 -- Not UC compatible, so neither of these (nor cat.db.table syntax) work:
 -- spark.databricks.sql.initial.catalog.name hive_metastore
--- USE CATALOG ggw;
+
+-- I am leaving this in, so we make sure to not use it until UC - DLT integration goes through!
+USE CATALOG ggw;
 
 -- COMMAND ----------
 
@@ -18,7 +20,7 @@ AS
   SELECT *,
          now() AS ingest_ts,
          'Workspace/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/Quality/row_and_set_dlt' AS ingest_src
-    FROM STREAM(ggw_department.employee_source);
+    FROM STREAM(ggw_quality.employee_source);
 
 -- COMMAND ----------
 
@@ -30,7 +32,7 @@ TBLPROPERTIES ("quality" = "bronze")
 AS 
   SELECT department,
          count(*) AS ManagerCount
-    FROM ggw_department.employee_source
+    FROM ggw_quality.employee_source
    GROUP BY department;
 
 -- COMMAND ----------

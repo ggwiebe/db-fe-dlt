@@ -9,7 +9,7 @@
 
 -- COMMAND ----------
 
-CREATE INCREMENTAL LIVE VIEW employee_row_bronze (
+CREATE INCREMENTAL LIVE TABLE employee_bronze (
 --   CONSTRAINT valid_hire_date EXPECT (id IS NULL)
 )
 COMMENT "The customers buying finished products ingested in incremental with Auto Loader"
@@ -22,27 +22,30 @@ AS
 
 -- COMMAND ----------
 
-CREATE INCREMENTAL LIVE VIEW employee_dept_set_bronze (
+CREATE LIVE VIEW employee_deptmgrcount_bronze (
 --   CONSTRAINT no_multiple_managers EXPECT (count <= 1)
 )
 COMMENT "The customers buying finished products ingested in incremental with Auto Loader"
-TBLPROPERTIES ("quality" = "bronze")
+TBLPROPERTIES ("quality" = "bronze-aggregate")
 AS 
   SELECT department,
          count(*) AS ManagerCount
     FROM ggw_department.employee_source
-   GROUP BY department;
+   WHERE position = 'Manager'
+   GROUP BY department
+;
 
 -- COMMAND ----------
 
-CREATE INCREMENTAL LIVE TABLE employee_dept_mgrcnt_bronze (
-  CONSTRAINT valid_hire_date EXPECT (id IS NULL),
-  CONSTRAINT no_multiple_managers EXPECT (count <= 1)
+CREATE INCREMENTAL LIVE TABLE employee_silver (
+  CONSTRAINT valid_hire_date EXPECT (hire_date < update_dt),
+  CONSTRAINT no_multiple_managers EXPECT (ManagerCount <= 1)
 )
-COMMENT "The customers buying finished products ingested in incremental with Auto Loader"
-TBLPROPERTIES ("quality" = "bronze")
+COMMENT "Employee cleansed table with both Row-level and Set/Aggregate-level quality rules applied."
+TBLPROPERTIES ("quality" = "silver")
 AS 
-  SELECT *
-    FROM LIVE.employee_row_bronze e,
-    INNER JOIN LIVE.employee_dept_set_bronze d
-      ON e.department = d.department
+  SELECT e.*,
+         d.ManagerCount
+    FROM STREAM(LIVE.employee_bronze) e
+    LEFT OUTER JOIN LIVE.employee_deptmgrcount_bronze d
+         ON e.department = d.department

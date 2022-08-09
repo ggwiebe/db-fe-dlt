@@ -53,6 +53,7 @@ INSERT INTO employee
 VALUES
   -- One new user in Sales
   (125, "Mercedes", "Sales",         "Member",  '2022-02-02', "INSERT", now())
+;
 
 -- COMMAND ----------
 
@@ -61,6 +62,7 @@ VALUES
   -- Sales Manager removed from the system, and Mercedes promoted Manager (no other details, like dept or hire-date change)
   (123, null,       null,            null,                   "DELETE", now()),
   (125, "Mercedes", null,            "Manager", null,        "UPDATE", now())
+;
 
 -- COMMAND ----------
 

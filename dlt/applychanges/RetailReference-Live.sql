@@ -13,15 +13,15 @@
 -- COMMAND ----------
 
 -- BRONZE - Read raw streaming file reader for "new" full Channel reference data
-CREATE INCREMENTAL LIVE TABLE channel
+CREATE STREAMING LIVE TABLE channel
   (
-    channelId int COMMENT 'ID of Sales Channel casted to int',
-    channelName string COMMENT 'Name of Retail Sales Channel',
-    description string COMMENT 'Description of Retail Sales Channel',
-    input_file_name string COMMENT 'Name of file in raw storage bucket',
-    dlt_ingest_dt timestamp COMMENT 'timestamp of dlt ingest', 
-    dlt_ingest_procedure string COMMENT 'name of the routine used to load table',
-    dlt_ingest_principal string COMMENT 'name of principal running load routine',
+    channelId int                 COMMENT 'ID of Sales Channel casted to int',
+    channelName string            COMMENT 'Name of Retail Sales Channel',
+    description string            COMMENT 'Description of Retail Sales Channel',
+    input_file_name string        COMMENT 'Name of file in raw storage bucket',
+    dlt_ingest_dt timestamp       COMMENT 'timestamp of dlt ingest', 
+    dlt_ingest_procedure string   COMMENT 'name of the routine used to load table',
+    dlt_ingest_principal string   COMMENT 'name of principal running load routine',
     CONSTRAINT valid_channel_id   EXPECT (channelId IS NOT NULL) ON VIOLATION FAIL UPDATE,
     CONSTRAINT valid_channel_name EXPECT (channelName IS NOT NULL) ON VIOLATION FAIL UPDATE
   )

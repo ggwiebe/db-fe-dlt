@@ -26,7 +26,7 @@
 -- COMMAND ----------
 
 -- BRONZE - CloudFiles AutoLoader reads raw streaming files for "new" customer records
-CREATE INCREMENTAL LIVE TABLE customer_bronze
+CREATE OR REFRESH STREAMING LIVE TABLE customer_bronze
   (
     id int COMMENT 'Casted to int',
     first_name string,
@@ -81,7 +81,7 @@ AS SELECT channelId,
 -- COMMAND ----------
 
 -- SILVER - View against Bronze that will be used to load silver incrementally with APPLY CHANGES INTO
-CREATE INCREMENTAL LIVE VIEW customer_bronze2silver_v (
+CREATE STREAMING LIVE VIEW customer_bronze2silver_v (
   CONSTRAINT valid_id           EXPECT (id IS NOT NULL) ON VIOLATION DROP ROW,
   CONSTRAINT valid_active       EXPECT (active BETWEEN 0 AND 1) ON VIOLATION DROP ROW,
   CONSTRAINT valid_channel      EXPECT (sales_channel IS NOT NULL),

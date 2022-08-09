@@ -19,6 +19,8 @@ CREATE WIDGET TEXT data_loc DEFAULT "/data";
 
 -- MAGIC %python
 -- MAGIC db_name = dbutils.widgets.get('db_name')
+-- MAGIC 
+-- MAGIC print("Running CustomerApplyChanges ")
 
 -- COMMAND ----------
 
@@ -38,17 +40,19 @@ DESCRIBE DATABASE EXTENDED $db_name;
 
 -- COMMAND ----------
 
--- Customer Channel Reference Table
--- DROP TABLE $db_name.channel;
-CREATE TABLE IF NOT EXISTS $db_name.channel (
-  channelId integer, 
-  channelName string,
-  description string
-);
-INSERT INTO $db_name.channel VALUES (1, 'RETAIL', 'Customer originated from Retail Stores');
-INSERT INTO $db_name.channel VALUES (2, 'WEB', 'Customer originated from Online properties');
-INSERT INTO $db_name.channel VALUES (3, 'PARTNER', 'Customer referred from Partners');
-INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer origination');
+-- THIS IS NOW A REFERENCE LOAD DLT PIPELINE
+
+-- -- Customer Channel Reference Table
+-- -- DROP TABLE $db_name.channel;
+-- CREATE TABLE IF NOT EXISTS $db_name.channel (
+--   channelId integer, 
+--   channelName string,
+--   description string
+-- );
+-- INSERT INTO $db_name.channel VALUES (1, 'RETAIL', 'Customer originated from Retail Stores');
+-- INSERT INTO $db_name.channel VALUES (2, 'WEB', 'Customer originated from Online properties');
+-- INSERT INTO $db_name.channel VALUES (3, 'PARTNER', 'Customer referred from Partners');
+-- INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer origination');
 
 -- COMMAND ----------
 
@@ -68,9 +72,14 @@ INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer originat
 -- COMMAND ----------
 
 -- MAGIC %python
--- MAGIC dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/in'.format(db_name))
--- MAGIC dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/out'.format(db_name))
--- MAGIC dbutils.fs.ls('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/{}/data/'.format(db_name))
+-- MAGIC # dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/in'.format(db_name))
+-- MAGIC # dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/out'.format(db_name))
+-- MAGIC dbutils.fs.ls('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/{}/data'.format(db_name))
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC print("ggw_retail.customers_source; path: {}".format("$root_location/$db_name/$data_loc/*.csv"))
 
 -- COMMAND ----------
 
@@ -334,7 +343,11 @@ dbutils.notebook.exit()
 
 -- COMMAND ----------
 
--- MAGIC %md ## -1. Reset the csv files
+-- MAGIC %md ## -1. Reset solution including csv files
+
+-- COMMAND ----------
+
+
 
 -- COMMAND ----------
 

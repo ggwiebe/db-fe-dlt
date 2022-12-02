@@ -10,9 +10,9 @@
 -- COMMAND ----------
 
 -- CREATE WIDGET TEXT root_location DEFAULT "/Users/glenn.wiebe@databricks.com/";
-CREATE WIDGET TEXT root_location DEFAULT "abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/";
+CREATE WIDGET TEXT root_location DEFAULT "dbfs:/Users/glenn.wiebe@databricks.com/";
 CREATE WIDGET TEXT db_name DEFAULT "ggw_retail";
-CREATE WIDGET TEXT data_loc DEFAULT "/data";
+CREATE WIDGET TEXT data_loc DEFAULT "/";
 -- REMOVE WIDGET old
 
 -- COMMAND ----------
@@ -44,15 +44,15 @@ DESCRIBE DATABASE EXTENDED $db_name;
 
 -- -- Customer Channel Reference Table
 -- -- DROP TABLE $db_name.channel;
--- CREATE TABLE IF NOT EXISTS $db_name.channel (
---   channelId integer, 
---   channelName string,
---   description string
--- );
--- INSERT INTO $db_name.channel VALUES (1, 'RETAIL', 'Customer originated from Retail Stores');
--- INSERT INTO $db_name.channel VALUES (2, 'WEB', 'Customer originated from Online properties');
--- INSERT INTO $db_name.channel VALUES (3, 'PARTNER', 'Customer referred from Partners');
--- INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer origination');
+CREATE TABLE IF NOT EXISTS $db_name.channel (
+  channelId integer, 
+  channelName string,
+  description string
+);
+INSERT INTO $db_name.channel VALUES (1, 'RETAIL', 'Customer originated from Retail Stores');
+INSERT INTO $db_name.channel VALUES (2, 'WEB', 'Customer originated from Online properties');
+INSERT INTO $db_name.channel VALUES (3, 'PARTNER', 'Customer referred from Partners');
+INSERT INTO $db_name.channel VALUES (9, 'OTHER', 'Unattributed customer origination');
 
 -- COMMAND ----------
 
@@ -60,10 +60,12 @@ DESCRIBE DATABASE EXTENDED $db_name;
 -- MAGIC   
 -- MAGIC e.g. for ggw_retail, use these:
 -- MAGIC ```
--- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail
--- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/data
--- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/data/in
--- MAGIC ```
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail  
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/sample  
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/in  
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/out  
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/error  
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/quarantine```
 -- MAGIC   
 -- MAGIC Sample data (insert, append, update & delete) in $db_name/data;  
 -- MAGIC Copy the individual files in sequence, to emulate a series of transactions arriving;  
@@ -71,10 +73,34 @@ DESCRIBE DATABASE EXTENDED $db_name;
 
 -- COMMAND ----------
 
+-- MAGIC %fs mkdirs /Users/glenn.wiebe@databricks.com/ggw_retail/quarantine
+
+-- COMMAND ----------
+
 -- MAGIC %python
 -- MAGIC # dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/in'.format(db_name))
 -- MAGIC # dbutils.fs.mkdirs('/Users/glenn.wiebe@databricks.com/{}/data/out'.format(db_name))
--- MAGIC dbutils.fs.ls('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/{}/data'.format(db_name))
+-- MAGIC dbutils.fs.ls('dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/')
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC dbutils.fs.ls('file:/Workspace/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/data')
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC dbutils.fs.cp('file:/Workspace/Repos/glenn.wiebe@databricks.com/db-fe-dlt/dlt/applychanges/data','dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/sample',True)
+
+-- COMMAND ----------
+
+-- %python
+-- dbutils.fs.rm('dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/in/customer-1-insert.csv')
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC dbutils.fs.ls('dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/sample')
 
 -- COMMAND ----------
 
@@ -84,14 +110,14 @@ DESCRIBE DATABASE EXTENDED $db_name;
 -- COMMAND ----------
 
 -- Create a "table" definition against all CSV files in the data location; This emulates the source system (pre-load, all data that will be loaded)
-DROP TABLE $db_name.customers_source ;
-CREATE TABLE $db_name.customers_source 
+-- DROP TABLE $db_name.customer_sample ;
+CREATE TABLE $db_name.customer_source 
   (
       id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string
   )
  USING CSV
 OPTIONS (
-    path "$root_location/$db_name/$data_loc/*.csv",
+    path "dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/sample/customer*.csv",
     header "true",
     -- inferSchema "true",
     mode "FAILFAST",
@@ -118,7 +144,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-1-insert.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+-- MAGIC %fs cp dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/sample/customer-1-insert.csv dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/in/
 
 -- COMMAND ----------
 
@@ -172,7 +198,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-2-append.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+-- MAGIC %fs cp dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/sample/customer-2-append.csv dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/in/
 
 -- COMMAND ----------
 
@@ -216,7 +242,7 @@ SELECT *
 
 -- COMMAND ----------
 
--- MAGIC %fs cp abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/customer-3-update.csv abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/
+-- MAGIC %fs cp dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/sample/customer-3-update.csv dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/in/
 
 -- COMMAND ----------
 

@@ -53,7 +53,7 @@ SELECT
     CAST(update_dt AS timestamp),
     update_user,
     input_file_name() input_file_name
-  FROM cloud_files('abfss://ggwstdlrscont1@ggwstdlrs.dfs.core.windows.net/ggw_retail/data/in/', 'csv', map('header', 'true', 'schema', 'id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string, input_file_name string'))
+  FROM cloud_files('dbfs:/Users/glenn.wiebe@databricks.com/ggw_retail/in/', 'csv', map('header', 'true', 'schema', 'id int, first_name string, last_name string, email string, channel string, active int, active_end_date date, update_dt timestamp, update_user string, input_file_name string'))
 ;
 
 -- COMMAND ----------
@@ -114,14 +114,12 @@ CREATE INCREMENTAL LIVE TABLE customer_silver
 TBLPROPERTIES ("quality" = "silver")
 COMMENT "Clean, merged customers"
 ;
-
--- COMMAND ----------
-
 APPLY CHANGES INTO live.customer_silver
 FROM stream(live.customer_bronze2silver_v)
   KEYS (id)
   APPLY AS DELETE WHEN active = 0
   SEQUENCE BY update_dt
+  STORED AS SCD TYPE 2
 ;
 
 -- COMMAND ----------

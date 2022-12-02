@@ -25,6 +25,6 @@ def customer_raw_csv():
       .option('cloudFiles.format', 'csv')
       .option('header', 'true')
       .schema('id int, first_name string, last_name string, email string, active int, update_dt timestamp, update_user string')
-      .load('/Users/glenn.wiebe@databricks.com/ggw_retail/data/in/')
+      .load('/Users/glenn.wiebe@databricks.com/ggw_retail/in/')
   )
 
